@@ -1,4 +1,4 @@
-const { UserInputError, AuthenticationError } = require("apollo-server");
+const { GraphQLError } = require("graphql");
 const Post = require("../../models/Post");
 const checkAuth = require("../../utils/check-auth");
 
@@ -8,7 +8,10 @@ module.exports = {
       const { username } = checkAuth(context);
 
       if (body.trim() === "") {
-        throw new UserInputError("Empty comment", {
+        throw new GraphQLError("Empty comment", {
+          extensions: {
+            code: "FORBIDDEN",
+          },
           errors: {
             body: "Comment body must not empty",
           },
@@ -27,7 +30,11 @@ module.exports = {
         await post.save();
         return post;
       } else {
-        throw new UserInputError("Post not found");
+        throw new GraphQLError("Post not found", {
+          extensions: {
+            code: "FORBIDDEN",
+          },
+        });
       }
     },
     deleteComment: async (_, { postId, commentId }, context) => {
@@ -43,10 +50,18 @@ module.exports = {
           await post.save();
           return post;
         } else {
-          throw new AuthenticationError("Action not allowed");
+          throw new GraphQLError("Action not allowed", {
+            extensions: {
+              code: "UNAUTHENTICATED",
+            },
+          });
         }
       } else {
-        throw new UserInputError("Post not found");
+        throw new GraphQLError("Post not found", {
+          extensions: {
+            code: "FORBIDDEN",
+          },
+        });
       }
     },
   },

@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
-const { UserInputError } = require("apollo-server");
+const { GraphQLError } = require("graphql");
 
 const {
   validateRegisterInput,
@@ -36,7 +36,10 @@ module.exports = {
       );
 
       if (!valid)
-        throw new UserInputError("Errors", {
+        throw new GraphQLError("Errors", {
+          extensions: {
+            code: "FORBIDDEN",
+          },
           errors,
         });
 
@@ -44,10 +47,11 @@ module.exports = {
       const user = await User.findOne({ username });
 
       if (user) {
-        throw new UserInputError("Username is already taken", {
-          errors: {
-            username: "This username is taken",
+        throw new GraphQLError("This username is taken", {
+          extensions: {
+            code: "FORBIDDEN",
           },
+          errors,
         });
       }
       // Hash the password and create an auth token
@@ -73,21 +77,32 @@ module.exports = {
     async login(_, { username, password }) {
       const { errors, valid } = validateLoginInput(username, password);
 
-      if (!valid) throw new UserInputError("Errors", { errors });
+      if (!valid) throw new GraphQLError("Errors", {
+        extensions: {
+          code: "FORBIDDEN",
+        },
+        errors,
+      });
 
       const user = await User.findOne({ username });
 
       if (!user) {
         errors.general = "User not found!";
-        throw new UserInputError("User not found!", {
-          errors,
+        throw new GraphQLError("User not found!", {
+          extensions: {
+            code: "FORBIDDEN",
+          },
+          errors
         });
       }
 
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
         errors.general = "Wrong credentials";
-        throw new UserInputError("Wrong credentials", {
+        throw new GraphQLError("Wrong credentials", {
+          extensions: {
+            code: "FORBIDDEN",
+          },
           errors,
         });
       }

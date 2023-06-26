@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = require("../config");
-const { AuthenticationError } = require("apollo-server");
+const { GraphQLError } = require("graphql");
 
 module.exports = (context) => {
   // context = {...headers}
@@ -15,7 +15,12 @@ module.exports = (context) => {
         const user = jwt.verify(token, SECRET_KEY);
         return user;
       } catch (err) {
-        throw new AuthenticationError("Invalid/Expired token");
+        throw new GraphQLError("Invalid/Expired token", {
+          extensions: {
+            code: "UNAUTHENTICATED",
+            myExtension: "Invalid/Expired token",
+          },
+        });
       }
     }
     throw new Error("Authentication token must be 'Bearer [token]");

@@ -1,6 +1,4 @@
-const gql = require("graphql-tag");
-
-module.exports = gql`
+module.exports = `#graphql
   type User {
     id: ID!
     email: String!
@@ -51,5 +49,9 @@ module.exports = gql`
     createComment(postId: ID!, body: String!): Post!
     deleteComment(postId: ID!, commentId: ID!): Post!
     likePost(postId: ID!): Post!
+  }
+
+  type Subscription {
+    newPost: Post!
   }
 `;
